@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全平台视频解析工具（合法版）</title>
+    <style>
+        :root {
+            --bili-pink: #FB7299;
+            --douyin-black: #161823;
+            --kuaishou-orange: #FF6600;
+            --primary-blue: #3498db;
+            --error-red: #e74c3c;
+            --success-green: #2ecc71;
+        }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 25px;
+            margin-top: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        #videoUrl {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e3e7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        #videoUrl:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.2);
+        }
+        #parseBtn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+        #parseBtn:hover {
+            background: #2980b9;
+        }
+        #parseBtn.loading {
+            background: #95a5a6;
+            cursor: wait;
+        }
+        .status-msg {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+            border-left: 4px solid transparent;
+        }
+        .error-msg {
+            background: #fdecea;
+            color: var(--error-red);
+            border-color: var(--error-red);
+        }
+        .success-msg {
+            background: #e8f5e9;
+            color: var(--success-green);
+            border-color: var(--success-green);
+        }
+        .result-container {
+            margin-top: 25px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 8px;
+            background: #000;
+            margin-bottom: 20px;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .video-info {
+            margin-bottom: 20px;
+        }
+        .video-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .platform-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .bilibili-tag {
+            background: var(--bili-pink);
+            color: white;
+        }
+        .douyin-tag {
+            background: var(--douyin-black);
+            color: white;
+        }
+        .kuaishou-tag {
+            background: var(--kuaishou-orange);
+            color: white;
+        }
+        .video-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 14px;
+        }
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .download-btn {
+            background: var(--success-green);
+            color: white;
+        }
+        .download-btn:hover {
+            background: #27ae60;
+        }
+        .original-btn {
+            background: #f1f3f5;
+            color: #333;
+        }
+        .original-btn:hover {
+            background: #e0e3e7;
+        }
+        .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-blue);
+            font-size: 14px;
+        }
+        .legal-notice {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 30px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>全平台视频解析工具</h1>
+        <p class="subtitle">支持B站、抖音、快手官方播放器嵌入</p>
+        
+        <div class="instructions">
+            <strong>使用说明：</strong>
+            <ol>
+                <li>复制视频网页链接（APP分享链接或网页版链接）</li>
+                <li>粘贴到下方输入框中</li>
+                <li>点击"解析视频"按钮</li>
+                <li>通过官方播放器观看（无下载功能）</li>
+            </ol>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="请输入视频链接，例如：https://www.bilibili.com/video/BV1xx411c7mD">
+        </div>
+        
+        <button id="parseBtn">
+            <span id="btnText">解析视频</span>
+            <div class="loading-spinner" id="loadingSpinner"></div>
+        </button>
+        
+        <div id="statusMsg" class="status-msg"></div>
+        
+        <div id="resultContainer" class="result-container">
+            <div class="video-info">
+                <div class="video-title" id="videoTitle"></div>
+                <div class="video-meta">
+                    <span id="videoAuthor"></span>
+                    <span id="videoDuration"></span>
+                </div>
+            </div>
+            
+            <div class="video-container">
+                <iframe id="videoFrame" allowfullscreen></iframe>
+            </div>
+            
+            <div class="action-btns">
+                <a href="#" id="originalBtn" class="action-btn original-btn" target="_blank">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    查看原视频
+                </a>
+            </div>
+        </div>
+        
+        <div class="legal-notice">
+            本工具仅通过各平台官方嵌入代码展示视频内容<br>
+            不提供视频下载功能，完全遵守各平台开发者协议
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const parseBtn = document.getElementById('parseBtn');
+            const videoUrlInput = document.getElementById('videoUrl');
+            const statusMsg = document.getElementById('statusMsg');
+            const resultContainer = document.getElementById('resultContainer');
+            const videoFrame = document.getElementById('videoFrame');
+            const videoTitle = document.getElementById('videoTitle');
+            const videoAuthor = document.getElementById('videoAuthor');
+            const videoDuration = document.getElementById('videoDuration');
+            const originalBtn = document.getElementById('originalBtn');
+            const btnText = document.getElementById('btnText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            // 解析按钮点击事件
+            parseBtn.addEventListener('click', parseVideo);
+            
+            // 输入框回车事件
+            videoUrlInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') parseVideo();
+            });
+            
+            function parseVideo() {
+                const videoUrl = videoUrlInput.value.trim();
+                
+                // 重置状态
+                statusMsg.style.display = 'none';
+                resultContainer.style.display = 'none';
+                
+                // 验证输入
+                if (!videoUrl) {
+                    showError('请输入视频链接');
+                    return;
+                }
+                
+                // 检测平台
+                const platform = detectPlatform(videoUrl);
+                if (!platform) {
+                    showError('不支持的链接格式，请确认是B站、抖音或快手的视频链接');
+                    return;
+                }
+                
+                // 显示加载状态
+                setLoading(true);
+                
+                // 使用官方嵌入方案
+                handleOfficialEmbed(videoUrl, platform)
+                    .then(data => {
+                        if (data.success) {
+                            showResult(data);
+                        } else {
+                            showError(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('解析错误:', error);
+                        showError('解析失败: ' + error.message);
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            }
+            
+            function detectPlatform(url) {
+                // 检测B站链接
+                if (/bilibili\.com|b23\.tv/.test(url)) return 'bilibili';
+                // 检测抖音链接
+                if (/douyin\.com|iesdouyin\.com/.test(url)) return 'douyin';
+                // 检测快手链接
+                if (/kuaishou\.com/.test(url)) return 'kuaishou';
+                return null;
+            }
+            
+            function handleOfficialEmbed(url, platform) {
+                return new Promise((resolve) => {
+                    // 模拟API请求延迟
+                    setTimeout(() => {
+                        try {
+                            const result = generateEmbedData(url, platform);
+                            resolve(result);
+                        } catch (error) {
+                            resolve({
+                                success: false,
+                                message: '生成嵌入代码失败'
+                            });
+                        }
+                    }, 800);
+                });
+            }
+            
+            function generateEmbedData(url, platform) {
+                // 提取视频ID
+                let videoId = '';
+                let embedUrl = '';
+                let title = '';
+                
+                switch (platform) {
+                    case 'bilibili':
+                        // 处理B站链接
+                        const bvidMatch = url.match(/(BV[a-zA-Z0-9]+)/) || 
+                                         url.match(/b23\.tv\/[^\s/]+\/(BV[a-zA-Z0-9]+)/);
+                        if (bvidMatch) {
+                            videoId = bvidMatch[1];
+                            embedUrl = `https://player.bilibili.com/player.html?bvid=${videoId}&autoplay=0`;
+                            title = `B站视频 ${videoId}`;
+                        }
+                        break;
+                        
+                    case 'douyin':
+                        // 抖音网页版嵌入（实际需要申请白名单）
+                        const douyinMatch = url.match(/video\/([0-9]+)/) || 
+                                           url.match(/\/([0-9]+)\/?\?/);
+                        if (douyinMatch) {
+                            videoId = douyinMatch[1];
+                            embedUrl = `https://www.douyin.com/embed/?video_id=${videoId}`;
+                            title = '抖音视频';
+                        }
+                        break;
+                        
+                    case 'kuaishou':
+                        // 快手网页版嵌入
+                        const kuaishouMatch = url.match(/short-video\/([0-9a-zA-Z]+)/) || 
+                                             url.match(/photo\/([0-9a-zA-Z]+)/);
+                        if (kuaishouMatch) {
+                            videoId = kuaishouMatch[1];
+                            embedUrl = `https://www.kuaishou.com/short-video/${videoId}`;
+                            title = '快手视频';
+                        }
+                        break;
+                }
+                
+                if (!videoId) {
+                    return {
+                        success: false,
+                        message: '无法从链接中提取视频ID'
+                    };
+                }
+                
+                return {
+                    success: true,
+                    platform: platform,
+                    title: title,
+                    author: platform === 'bilibili' ? 'B站UP主' : 
+                           platform === 'douyin' ? '抖音创作者' : '快手用户',
+                    duration: '--:--',
+                    embedUrl: embedUrl,
+                    originalUrl: url
+                };
+            }
+            
+            function showResult(data) {
+                // 设置视频标题和平台标签
+                videoTitle.innerHTML = `${data.title} <span class="platform-tag ${data.platform}-tag">${
+                    data.platform === 'bilibili' ? 'B站' : 
+                    data.platform === 'douyin' ? '抖音' : '快手'
+                }</span>`;
+                
+                // 设置视频信息
+                videoAuthor.textContent = `作者: ${data.author}`;
+                videoDuration.textContent = `时长: ${data.duration}`;
+                
+                // 设置iframe嵌入代码
+                if (data.embedUrl) {
+                    videoFrame.src = data.embedUrl;
+                } else {
+                    videoFrame.srcdoc = `<div style="display:flex;align-items:center;justify-content:center;height:100%;">
+                        <p style="color:#666;">无法加载视频预览</p>
+                    </div>`;
+                }
+                
+                // 设置原链接按钮
+                originalBtn.href = data.originalUrl;
+                
+                // 显示结果区域
+                resultContainer.style.display = 'block';
+                showSuccess('解析成功！使用官方播放器加载中...');
+            }
+            
+            function showError(message) {
+                statusMsg.textContent = message;
+                statusMsg.className = 'status-msg error-msg';
+                statusMsg.style.display = 'block';
+            }
+            
+            function showSuccess(message) {
+                statusMsg.textContent = message;
+                statusMsg.className = 'status-msg success-msg';
+                statusMsg.style.display = 'block';
+            }
+            
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    parseBtn.classList.add('loading');
+                    btnText.textContent = '解析中...';
+                    loadingSpinner.style.display = 'block';
+                    parseBtn.disabled = true;
+                } else {
+                    parseBtn.classList.remove('loading');
+                    btnText.textContent = '解析视频';
+                    loadingSpinner.style.display = 'none';
+                    parseBtn.disabled = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
